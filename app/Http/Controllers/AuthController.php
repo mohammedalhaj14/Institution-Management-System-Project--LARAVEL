@@ -50,22 +50,23 @@ class AuthController extends Controller
     {
         return view('user.login');
     }
-    public function login(Request $request)
-    {
-        // Validate the request data
-        $fields = $request->validate([
-            'username' => ['required', 'string'],
-            'password' => ['required', 'min:8'],
-        ]);
+   public function login(Request $request)
+{
+    $fields = $request->validate([
+        'username' => ['required', 'string'],
+        'password' => ['required', 'min:8'],
+    ]);
 
-        // Attempt to authenticate the user
-        if (Auth::attempt(['username' => $fields['username'], 'password' => $fields['password']]) && Auth::user()->role === 'student') {
-            // Logic for successful login and role check
-            return redirect('/');
-        } else {
-            return redirect('/dashboard');
-        }
+    if (Auth::attempt(['username' => $fields['username'], 'password' => $fields['password']])) {
+        $request->session()->regenerate();
+
+        return Auth::user()->role === 'admin'
+            ? redirect('/dashboard')
+            : redirect('/');
     }
+
+    return back()->withErrors(['username' => 'Invalid username or password.'])->onlyInput('username');
+}
     public function logout()
     {
         Auth::logout();
